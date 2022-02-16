@@ -1,0 +1,1 @@
+An async writeFile created in 11-fsModuleAsync.js with appended text: This is inside Content folder and This is inside Subcontent folder

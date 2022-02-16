@@ -1,0 +1,1 @@
+Testing path.join() for file '9-pathModule.js'
