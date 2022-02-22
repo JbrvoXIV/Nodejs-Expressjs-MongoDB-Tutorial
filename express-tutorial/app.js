@@ -1,42 +1,58 @@
-const http = require('http')
-const { readFileSync } = require('fs')
+const express = require('express')
+const app = express()
+const { products, people } = require('./data.js')
+const _ = require('lodash')
 
-// get all files
-const homePage = readFileSync('./navbar-app/index.html')
-const homeStyles = readFileSync('./navbar-app/style.css')
-const homeImage = readFileSync('./navbar-app/logo.svg')
-const homeLogic = readFileSync('./navbar-app/browser-app.js')
+// app.get('/', (req, res) => { // outputs JSON on homepage, imported from data.js
+//     res.json(products)
+// })
 
-const server = http.createServer((req, res) => {
-
-    const url = req.url
-    console.log(url)
-
-    if(url === '/') { // Home Page
-        res.writeHead(200, { 'content-type': 'text/html' })
-        res.write(homePage)
-        res.end()
-    } else if(url === '/about') { // About Page
-        res.writeHead(200, { 'content-type': 'text/html' })
-        res.write(`<h1>About Page</h1>`)
-        res.end()
-    } else if(url === '/styles.css') { // About Page
-        res.writeHead(200, { 'content-type': 'text/css' })
-        res.write(homeStyles)
-        res.end()
-    } else if(url === '/logo.svg') {
-        res.writeHead(200, { 'content-type': 'image/svg+xml' })
-        res.write(homeImage)
-        res.end()
-    } else if(url === '/browser-app.js') {
-        res.writeHead(200, { 'content-type': 'text/javascript' })
-        res.write(homeLogic)
-        res.end()
-    } else { // Page Not Found
-        res.writeHead(404, { 'content-type': 'text/html' })
-        res.write(`<h1>404: Page Not Found</h1>`)
-        res.end()
-    }
+app.get('/', (req, res) => {
+    res.send(
+        `<h1>Home Page</h1>
+        <a href='/api/products'>Products</a>`
+    )
 })
 
-server.listen(5000)
+// map specific keys from JSON data
+app.get('/api/products', (req, res) => {
+    const newProducts = products.map(product => {
+        const { id, name, image } = product
+        return { id, name, image }
+    })
+    res.json(newProducts)
+})
+
+// return a single key from JSON data
+app.get('/api/products/1', (req, res) => {
+    const singleProduct = products.find(product => product.id === 1)
+    res.json(singleProduct)
+})
+
+// route parameters ':'
+app.get('/api/products/:productID', (req, res) => {
+    // console.log(req)
+    // console.log(req.params);
+
+    const { productID } = req.params
+    const productData = products.find(
+        product => product.id === _.toInteger(productID)
+    )
+
+    if(!productData) {
+        return res.status(404).send('Product Does Not Exist')
+    }
+
+    console.log(productData)
+    res.json(productData)
+})
+
+// complex route parameters
+app.get('/api/products/:productID/reviews/:reviewID', (req, res) => {
+    console.log(req.params)
+    res.send('Hello World')
+})
+
+app.listen(5000, () => {
+    console.log('Server is listening on port 5000...')
+})
