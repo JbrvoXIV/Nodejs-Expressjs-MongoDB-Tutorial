@@ -1,6 +1,7 @@
 const express = require('express')
 const app = express()
 const logger = require('./logger.js')
+const authorize = require('./authorize.js')
 
 // Middleware: req => middleware => res
 
@@ -9,7 +10,8 @@ const logger = require('./logger.js')
 //     res.send('Home Page')
 // })
 
-app.use(logger);
+app.use([logger, authorize]);
+
 // or pass specifically to certain paths
 // app.use('/api', logger)
 
@@ -26,6 +28,7 @@ app.get('/contacts', (req, res) => {
 });
 
 app.get('/product', (req, res) => {
+    console.log(req.user)
     res.send('Product Page')
 });
 
