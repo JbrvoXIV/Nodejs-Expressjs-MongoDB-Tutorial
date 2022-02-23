@@ -1,37 +1,94 @@
 const express = require('express')
 const app = express()
-const logger = require('./logger.js')
-const authorize = require('./authorize.js')
+let { people } = require('./data')
 
-// Middleware: req => middleware => res
+// static assets
+app.use(express.static('./methods-public'))
 
-// can pass logger as middleware parameter in .get or use app.use to pass globally
-// app.get('/', logger, (req, res) => {
-//     res.send('Home Page')
-// })
+// parse form data
+app.use(express.urlencoded({ extended: false }))
 
-app.use([logger, authorize]);
+app.post('/login', (req, res) => {
+    const { name } = req.body
+    if (name) {
+        return res.status(200).send(`Welcome ${name}`)
+    } else {
+        return res.send('Please Provide Credentials')
+    }
+})
 
-// or pass specifically to certain paths
-// app.use('/api', logger)
+// parse json
+app.use(express.json())
 
-app.get('/', (req, res) => {
-    res.send('Home Page')
-});
+app.post('/api/people', (req, res) => {
+    const { name } = req.body
+    if (!name) {
+        return res.status(400).json({ success: false, message: 'Please provide name value' })
+    }
+    return res.status(201).json({ success: true, person: name })
+})
 
-app.get('/about', (req, res) => {
-    res.send('About Page')
-});
+app.get('/api/people', (req, res) => {
+    res.status(200).json({ success: true, data: people })
+})
 
-app.get('/contacts', (req, res) => {
-    res.send('Contact Page')
-});
+// retrieves name from input and returns updated data set with new name
+app.post('/api/people/postman', (req, res) => {
+    const { name } = req.body
+    if (!name) {
+        return res
+                .status(400)
+                .json({ success: false, message: 'Please provide name value' })
+    } else {
+        return res.status(201).send({ success: true, data: [...people, { id: people.length + 1, name: name}] })
+    }
+})
 
-app.get('/product', (req, res) => {
-    console.log(req.user)
-    res.send('Product Page')
-});
+
+// accesses id from params and name from body and updates name according to ID
+app.put('/api/people/:id', (req, res) => {
+    const { id } = req.params
+    const { name } = req.body
+
+    const person = people.find(person => {
+        return person.id === Number(id)
+    })
+
+    if (!person) {
+        return res
+                .status(404)
+                .json({ success: false, message: `No Person with ID ${id}`})
+    }
+
+    const newPeople = people.map(person => {
+        if (person.id === Number(id)) {
+            person.name = name
+        }
+        return person
+    })
+    
+    return res.status(200).json({ success: true, data: newPeople })
+})
+
+// accesses id from params and deletes entry containing id and returns new data set
+app.delete('/api/people/:id', (req, res) => {
+    const person = people.find(person => {
+        return person.id === Number(req.params.id)
+    })
+
+    if (!person) {
+        return res
+                .status(404)
+                .json({ success: false, message: `Person with ID ${req.params.id} not found.` })
+    }
+
+    const newPeople = people.filter(person => {
+        return person.id !== Number(req.params.id)
+    })
+
+    res.status(200).json({ success: true, data: newPeople })
+})
 
 app.listen(5000, () => {
-    console.log('Server is listening on port 5000...')
-});
+    console.log('Server listening on port 5000...')
+})
